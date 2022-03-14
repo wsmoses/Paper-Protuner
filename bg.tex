@@ -1,0 +1,58 @@
+\section{Background}
+\subsection{Halide Scheduling}
+Halide~\cite{ragan2013halide} is a domain-specific language for image processing and deep learning tasks. 
+Halide's language abstraction decouples the algorithmic descriptions of the target image processing workloads from a specific mapping of the workload on hardware, which we refer to as a ``schedule''. This abstraction provides the user with a clearly defined scheduling space and makes it easier to explore different schedules automatically.
+Many decisions need to be made in a Halide schedule, including the execution order of different functions, vectorization factors, tiling factors, inlining, memory allocation strategies, etc.
+The overall scheduling space is intractable and expert scheduling can be hard to develop. Therefore, automatic generation of high-performance Halide schedulings has been implemented and studied in several prior works  ~\cite{mullapudi2015polymage}\cite{mullapudi2016automatically}\cite{sioutas2019schedule}\cite{adams2019learning}.
+
+\subsection{Beam Search}
+Beam search~\cite{reddy1977speech} is a heuristic algorithm that explores a decision tree and searches for the optimal decisions by expanding a limited number of children with the highest intermediate rewards. It is widely used for the sequential decision-making process, such as speech recognition~\cite{reddy1977speech} and software scheduling~\cite{adams2019learning}. It builds its search tree with a breadth-first search. 
+At each step of the algorithm, it exhaustively evaluates all the direct children, sorts the children based on the intermediate rewards, and keeps the top-$k$ children as the parent nodes for the next iteration. 
+$k$ is the beam size that determines the total number of top children to keep at every iteration.
+It is essentially a greedy algorithm and thus can get stuck in local optima. 
+
+\subsection{Markov Decision Processes}
+%\ameer{Jenny: explain here MDP and that MCTS solves it}
+A Markov decision process (MDP) is a discrete stochastic control process that models sequential decision making in fully observable environments. It assumes the Markov property that the impact of one decision taken in a state only depends on that state and not the prior decision history. 
+An MDP model consists of:
+\begin{itemize}
+    \item $S$: A set of possible states, with $s_0$ representing the initial state. 
+    \item $A$: A set of possible actions. 
+    \item $R(s, a)$: A reward function. 
+    \item $T(s' | s, a)$: A transition function that models the probability of getting to state $s'$ given an action $a$ in state $s$. 
+\end{itemize}
+Solving an MDP means finding a policy $\pi(s)$ that chooses an action to apply based on the current state and optimizes for the overall expected reward. The decision making process is modeled as a sequence of state and action pairs $(s, a)$. The next state $s'$ can either be decided deterministically by the pair $(s, a)$ or stochastically by a probability distribution $p(s'|s, a)$.  
+%The full observability of MDP assumes the decision making agent has the complete knowledge of the underlying state in the environment.%, not a belief based on partial knowledge of the state. 
+%In the case where the available knowledge of the underlying state is limited, an extension of MDP, partially-observable Markov decision process (POMDP) formulation can be used.   
+
+%something like that (from here http://www.incompleteideas.net/609\%20dropbox/other\%20readings\%20and\%20resources/MCTS-survey.pdf)...
+%A Markov decision process (MDP) models sequential decision problems in fully observable environments using
+%four components [178, Ch.17]:
+%• S: A set of states, with s0 being the initial state.
+%• A: A set of actions.
+%• T(s, a, s0
+%): A transition model that determines the
+%probability of reaching state s0 if action a is applied
+%to state s.
+%• R(s): A reward function.
+%Overall decisions are modelled as sequences of (state, action) pairs, in which each next state s0 is decided by a probability distribution which depends on the current state s and the chosen action a. A policy is a mapping from states to actions, specifying which action will be chosen from each state in S. The aim is to find the policy that yields the highest expected reward.
+
+
+\subsection{Monte Carlo Tree Search}
+Monte Carlo Tree Search (MCTS) is a method that can solve MDPs. It combines tree search with random sampling for finding the optimal decisions in the MDP. In MCTS, a tree is built incrementally based on selection, expansion, simulation, and backpropagation. 
+A \textit{tree policy} is used to \textit{select} a node to expand at each iteration of the algorithm. This policy should balance the exploration and exploitation of the search algorithm. The node is \textit{expanded} and a \textit{simulation} is then run from the selected node to collect the rewards of the terminal state. The decisions made during the simulation are determined by a \textit{default policy}, which can be uniform random sampling in its simplest form and this is what we use. Lastly MCTS backpropagates the reward and updates the statistics of the ancestor nodes. In this paper, the tree policy used is the UCB~\cite{auer2002finite}:
+\begin{equation}
+    UCB = \bar{X_j} + 2C_p\sqrt{\frac{2ln(n)}{n_j}}
+\end{equation}
+where $n$ is the number of times the current parent node has been visited, $n_j$ is the number of times child $j$ has been visited, and $C_p>0$ is a constant. $\bar{X_j}$ is the average reward of the simulations. The left term ($\bar{X_j}$) tracks exploitation while the right term tracks exploration. Increasing $C_p$ will add more exploration, and decreasing it will reduce exploration.
+
+According to \cite{jakl2011arimaa}, MCTS offers significant advantages over alpha-beta pruning that minimizes the search space in the scenario where there is no good evaluation function. The evaluation of moves in MCTS has been proven to converge to Minimax.
+
+% \subsection{Value Function Estimation}
+% \jenny{should we mention it at all? if we are not using it the MCTS}
+
+
+% \ameer{Jenny: describe beam search and prior work}\newline
+% \ameer{Jenny: related work}\newline
+% \ameer{Jenny: describe MCTS in detail, mention the survey I shared you and the convergence guarantees}\newline
+% \ameer{Jenny: describe value function estimation}\newline

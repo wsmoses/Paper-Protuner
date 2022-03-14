@@ -1,0 +1,11 @@
+\section{Design Space Exploration}
+One of the most challenging tasks of designing the MCTS was finding the right configurations, which includes hyperparamter tuning, reward engineering, and finding the right trade-off between greediness and randomness. Our main objective was to find optimal schedules as fast as possible. This is challenging because while MCTS has optimality guarantees it often runs for a prolonged period of time, which can make our approach less attractive.
+
+We start with the UCB equation:
+\begin{equation}
+    UCB = \bar{X_j} + C_p\sqrt{\frac{2ln(n)}{n_j}}
+\end{equation}
+
+The reward can be defined as the negative execution-time. But in that case the MCTS will rarely explore because of the high value and range of the execution-times. Therefore, we set the reward to $\frac{1}{execution_time}$. In that case our reward is bounded between 0 and 1. Kocsis \textit{et al.}~\cite{kocsis2006improved} has shown that $C_p = \sqrt(2)$ works well with rewards in range $[0,1]$ as it satisfies the Hoeffding inequality. Increasing $C_p$ will add more exploration, and decreasing it will reduce exploration. In our case, the cost model predicts execution times that results in very small rewards, and hence the exploitation phase starts very late. This might be useful in very large benchmarks, but since we want to limit the runtime of the MCTS, we chose $C_p$ to be equal to the average reward of the node. This puts $C_p$ in the range of the reward values and encourages earlier exploitation without compromising exploration.
+
+

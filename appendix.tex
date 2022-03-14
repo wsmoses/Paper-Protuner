@@ -1,0 +1,61 @@
+\section*{Appendix}
+\subsection{Running}
+Once the Github repository is cloned and the machine is setup run:
+\begin{minted}{bash}
+./generate_all_apps_results.sh
+\end{minted}
+inside Halide/apps/autoscheduler/paper\_results\_scripts directory.
+\subsection{Setting AWS Instance}
+we use Ubuntu Server 18.04 LTS (HVM), SSD Volume Type - ami-003634241a8fcdec0 (64-bit x86)  m5.8xlarge instances with 100GB Storage.
+\subsubsection{Turning Off Hyperthreading}
+
+\begin{minted}{bash}
+#!/bin/bash
+for i in {16..31}; do
+  echo "Disabling logical HT core $i."
+  echo 0 > /sys/devices/system/cpu/cpu${i}/online;
+done
+\end{minted}
+\subsubsection{Set Up}
+\begin{minted}{bash}
+sudo apt-get install libcurl4-openssl-dev libssl-dev
+uuid-dev zlib1g-dev libpulse-dev -y
+#Might need :
+#sudo apt-get clean
+#sudo apt-get update
+sudo snap install cmake --classic
+git clone https://github.com/llvm/llvm-project.git
+cd llvm-project
+git checkout release/9.x  # to build LLVM 9.x
+mkdir build
+mkdir install
+cd build
+cmake -DLLVM_ENABLE_PROJECTS="clang;lld;clang-tools-extra" 
+-DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_TERMINFO=OFF
+-DLLVM_TARGETS_TO_BUILD="X86;ARM;NVPTX;AArch64;Mips;PowerPC;Hexagon" 
+-DLLVM_ENABLE_ASSERTIONS=ON -DCMAKE_BUILD_TYPE=Release
+-DLLVM_BUILD_32_BITS=OFF -DCMAKE_INSTALL_PREFIX=../install 
+../llvm
+make install -j16
+export LLVM_CONFIG=~/llvm-project/install/bin/llvm-config
+cd ..
+git clone https://github.com/Anonymous/Halide
+cd Halide
+make -j30
+install anaconda
+curl -O https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+sha256sum Anaconda3-2019.03-Linux-x86_64.sh
+bash Anaconda3-2019.03-Linux-x86_64.sh
+source ~/.bashrc
+conda create --name halide python=3
+conda activate halide
+pip install torch torch-vision numpy
+conda install -c anaconda libpng
+sudo apt-get install libjpeg-dev
+export LD_LIBRARY_PATH=~/llvm-project/Halide/bin
+cd ~/llvm-project/Halide/apps/autoscheduler/\
+paper_results_scripts
+./generate_all_apps_results
+\end{minted}
+
+
